@@ -8,7 +8,9 @@ The server-side of the Babble chat application (HSC SDD Major Project)
 
 # Installation
 
-` $ git clone https://github.com/Romejanic/Babble-Server.git
-` $ cd Babble-Server
-` $ npm install
-` $ npm run start
+`
+$ git clone https://github.com/Romejanic/Babble-Server.git
+$ cd Babble-Server
+$ npm install
+$ npm run start
+`
