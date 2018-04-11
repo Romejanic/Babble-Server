@@ -1,0 +1,16 @@
+{
+  "name": "babble-server",
+  "version": "0.0.1",
+  "author": {
+    "name": "Jack Davenport"
+  },
+  "description": "Enterprise group chat",
+  "main": "/app/main.js",
+  "scripts": {
+    "start": "node app/main.js"
+  },
+  "dependencies": {
+    "readline-sync": "^1.4.9",
+    "sync-mysql": "^3.0.1"
+  }
+}
