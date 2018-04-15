@@ -4,6 +4,9 @@ const server = {
     start: function(callback) {
         this.socketServer = net.createServer((socket) => {
             socket.write("pong!");
+            socket.on("data", (data) => {
+                console.log(data.toString()); 
+            });
         });
         this.socketServer.on("error", (e) => {
             if(e.code == "EADDRINUSE") {
@@ -17,6 +20,9 @@ const server = {
         this.socketServer.listen(() => {
             serverListenCallback(this.socketServer, callback);
         });
+    },
+    stop: function() {
+        this.socketServer.close();
     }
 };
 

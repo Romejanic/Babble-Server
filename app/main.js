@@ -92,9 +92,16 @@ babbleServer.start(() => {
 
         var cmd;
         while((cmd = readLine.question("> ")) != "logout") {
+            if(cmd == "stop") {
+                console.log("Stopping server...");
+                shutdown = true;
+                break;
+            }
             console.log(cmd);
         }
 
         console.log("Goodbye " + username + "!");
+        username = undefined;
+        password = undefined;
     }
 });

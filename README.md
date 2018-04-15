@@ -1,10 +1,10 @@
 # Babble-Server
-The server-side of the Babble chat application (HSC SDD Major Project)
+The server-side of the Babble chat application (HSC SDD Major Project).
 
 # Requirements
-- Node.JS v6.11 or higher
-- NPM v3.10 or higher
-- MySQL server
+- [Node.JS](http://nodejs.org/) v6.11 or higher
+- [NPM](https://www.npmjs.com/) v3.10 or higher
+- [MySQL](https://www.mysql.com/) server set up and running
 
 # Installation
 
