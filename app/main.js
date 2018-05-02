@@ -104,4 +104,9 @@ babbleServer.start(() => {
         username = undefined;
         password = undefined;
     }
+
+    babbleServer.stop();
+    mysql.disconnect();
+    console.log("== Shutdown complete! ==");
+    console.log("If the program hangs, you may safely now close it with Ctrl-C.");
 });

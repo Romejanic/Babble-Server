@@ -3,9 +3,13 @@ const net = require("net");
 const server = {
     start: function(callback) {
         this.socketServer = net.createServer((socket) => {
+            socket.setNoDelay(true);
             socket.write("pong!");
             socket.on("data", (data) => {
                 console.log(data.toString()); 
+            });
+            socket.on("error", (e) => {
+                console.error("Error when handling socket!\n", e);
             });
         });
         this.socketServer.on("error", (e) => {
@@ -15,6 +19,8 @@ const server = {
                     this.socketServer.close();
                     this.socketServer.listen(() => { serverListenCallback(this.socketServer, callback); });
                 }, 1000);
+            } else {
+                console.error("Error when handling socket!\n", e);
             }
         });
         this.socketServer.listen(() => {

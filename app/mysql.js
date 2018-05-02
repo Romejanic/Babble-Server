@@ -4,7 +4,12 @@ const fs = require("fs");
 var mysqlModule = {
     connect: function(config) {
         this.connection = new MySQL(config);
+        console.log(this.connection);
     },
+    disconnect: function() {
+        this.connection.end();
+    },
+
     performInitialization: function(config) {
         var result = this.executeSqlFile("init_db");
         if(result) {
