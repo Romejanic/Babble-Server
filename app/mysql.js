@@ -4,10 +4,9 @@ const fs = require("fs");
 var mysqlModule = {
     connect: function(config) {
         this.connection = new MySQL(config);
-        console.log(this.connection);
     },
     disconnect: function() {
-        this.connection.end();
+        console.log(this.connection);
     },
 
     performInitialization: function(config) {

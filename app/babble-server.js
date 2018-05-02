@@ -3,10 +3,9 @@ const net = require("net");
 const server = {
     start: function(callback) {
         this.socketServer = net.createServer((socket) => {
-            socket.setNoDelay(true);
             socket.write("pong!");
             socket.on("data", (data) => {
-                console.log(data.toString()); 
+                socket.write(data.toString().split("").reverse().join(""));
             });
             socket.on("error", (e) => {
                 console.error("Error when handling socket!\n", e);
@@ -23,7 +22,7 @@ const server = {
                 console.error("Error when handling socket!\n", e);
             }
         });
-        this.socketServer.listen(() => {
+        this.socketServer.listen(33955, () => {
             serverListenCallback(this.socketServer, callback);
         });
     },
@@ -33,7 +32,7 @@ const server = {
 };
 
 function serverListenCallback(server, callback) {
-    console.log("Server started on ", server.address());
+    console.log("Server started on", server.address());
     callback();
 }
 

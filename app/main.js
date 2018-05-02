@@ -66,47 +66,8 @@ if(!config) {
     console.log("== Connecting to MySQL... ==");
     mysql.connect(config.db);
 }
+
 console.log("== Starting server... ==");
-
 const babbleServer = require("./babble-server.js");
-babbleServer.start(() => {
-    var shutdown = false;
-    while(!shutdown) {
-        var username, password;
-        while(!username || !password) {
-            username = readLine.question("Admin username > ");
-            password = readLine.question("Admin password > ", { hideEchoBack: true });
-            var adminSalt = config.adminPassword.substring(0, 16);
-            var adminPassword = config.adminPassword.substring(16);
-            password = crypto.createHmac("sha256", adminSalt).update(adminSalt+password).digest("base64");
-            if(!username || username !== config.adminUsername || password !== adminPassword) {
-                console.error("Err: invalid login, please try again");
-                username = undefined;
-                password = undefined;
-            } else {
-                break;
-            }
-        }
-        console.log("Welcome back, " + username + "!");
-        console.log("Type help for a list of commands");
-
-        var cmd;
-        while((cmd = readLine.question("> ")) != "logout") {
-            if(cmd == "stop") {
-                console.log("Stopping server...");
-                shutdown = true;
-                break;
-            }
-            console.log(cmd);
-        }
-
-        console.log("Goodbye " + username + "!");
-        username = undefined;
-        password = undefined;
-    }
-
-    babbleServer.stop();
-    mysql.disconnect();
-    console.log("== Shutdown complete! ==");
-    console.log("If the program hangs, you may safely now close it with Ctrl-C.");
-});
+const cli = require("./cli.js")(config, babbleServer, mysql);
+babbleServer.start(cli.start);
