@@ -2,7 +2,7 @@ const net = require("net");
 
 const server = {
     clients: Array(),
-    start: function(callback) {
+    start: function(config, callback) {
         this.socketServer = net.createServer((socket) => {
             socket.on("data", (data) => {
                 socket.write(data.toString().split("").reverse().join(""));
@@ -16,13 +16,13 @@ const server = {
                 console.error("Server address already in use, finding new port...");
                 setTimeout(() => {
                     this.socketServer.close();
-                    this.socketServer.listen(() => { serverListenCallback(this.socketServer, callback); });
+                    this.socketServer.listen(config.serverPort, () => { serverListenCallback(this.socketServer, callback); });
                 }, 1000);
             } else {
                 console.error("Error when handling socket!\n", e);
             }
         });
-        this.socketServer.listen(() => {
+        this.socketServer.listen(config.serverPort, () => {
             serverListenCallback(this.socketServer, callback);
         });
     },

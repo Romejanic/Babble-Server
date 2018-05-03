@@ -24,6 +24,7 @@ if(!config) {
     config.concurrentConnections = readLine.questionInt("How many concurrent connections to the server are allowed? (Default 500) > ") || 500;
     config.loggingPeriod = readLine.questionInt("How long are messages logs kept? (days, Default 30) > ") || 30;
     config.maxGroupName = readLine.questionInt("How long are group chat names allowed to be? (Default 25) > ") || 25;
+    config.serverPort = readLine.questionInt("What port will the server use? (Default 55202) > ") || 55202;
     console.log("== Configuration complete! ==");
 
     while(!config.adminUsername || config.adminUsername.trim().length <= 0) {
@@ -77,4 +78,4 @@ const cli = require("./cli.js")(config, babbleServer, mysql, () => {
     console.log("== Shut down server! ==");
     console.log("If the program hangs, you may now safely close it with Ctrl-C.");
 });
-babbleServer.start(cli.start);
+babbleServer.start(config, cli.start);

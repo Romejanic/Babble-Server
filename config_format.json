@@ -2,5 +2,6 @@
     "companyName": "My Awesome Company",
     "concurrentConnections": 50,
     "loggingPeriod": 40,
-    "maxGroupName": 40
+    "maxGroupName": 40,
+    "serverPort": "55202"
 }
