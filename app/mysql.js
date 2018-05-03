@@ -6,7 +6,7 @@ var mysqlModule = {
         this.connection = new MySQL(config);
     },
     disconnect: function() {
-        console.log(this.connection);
+        this.connection.dispose();
     },
 
     performInitialization: function(config) {

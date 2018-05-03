@@ -69,5 +69,12 @@ if(!config) {
 
 console.log("== Starting server... ==");
 const babbleServer = require("./babble-server.js");
-const cli = require("./cli.js")(config, babbleServer, mysql);
+const cli = require("./cli.js")(config, babbleServer, mysql, () => {
+    console.log("Shutting down server...");
+    babbleServer.stop();
+    mysql.disconnect();
+
+    console.log("== Shut down server! ==");
+    console.log("If the program hangs, you may now safely close it with Ctrl-C.");
+});
 babbleServer.start(cli.start);

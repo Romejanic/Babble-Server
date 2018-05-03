@@ -2,7 +2,7 @@ const readline = require("readline");
 const crypto = require("crypto");
 const Writable = require('stream').Writable;
 
-const cli = function(config, server, mysql) {
+const cli = function(config, server, mysql, shutdownCallback) {
     return {
         start: function() {
             var username, password;
@@ -37,9 +37,11 @@ const cli = function(config, server, mysql) {
                         username = line.trim();
                         rl.setPrompt("Admin password > ");
                         rl.prompt();
+                        mutableStdout.muted = true;
                     }
                 } else if(!password) {
                     mutableStdout.muted = false;
+                    console.log();
                     if(!line || line.trim().length <= 0) {
                         console.error("Invalid password!");
                         username = undefined;
@@ -58,12 +60,25 @@ const cli = function(config, server, mysql) {
                             rl.setPrompt("Admin username > ");
                         } else {
                             console.log("Welcome, " + username + "!");
+                            console.log("Type 'help' for a list of commands.");
                             rl.setPrompt("> ");
                         }
                     }
                 } else if(username && password) {
                     var cmd = line.trim();
-                    console.log(cmd);
+                    if(cmd.length > 0) {
+                        if(cmd.startsWith("shutdown")) {
+                            rl.close();
+                            mutableStdout.muted = true;
+                        } else if(cmd.startsWith("logout")) {
+                            console.log("Goodbye, " + username + "!");
+                            username = undefined;
+                            password = undefined;
+                            rl.setPrompt("Admin username > ");
+                        } else {
+                            console.log("Unrecognized command: " + cmd);
+                        }
+                    }
                 } else {
                     console.log("You must be logged in to perform actions.");
                     username = undefined;
@@ -71,6 +86,7 @@ const cli = function(config, server, mysql) {
                 }
                 if(!mutableStdout.muted) { rl.prompt(); }
             });
+            rl.on("close", shutdownCallback);
         }
     };
 };

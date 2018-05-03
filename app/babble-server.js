@@ -1,9 +1,9 @@
 const net = require("net");
 
 const server = {
+    clients: Array(),
     start: function(callback) {
         this.socketServer = net.createServer((socket) => {
-            socket.write("pong!");
             socket.on("data", (data) => {
                 socket.write(data.toString().split("").reverse().join(""));
             });
