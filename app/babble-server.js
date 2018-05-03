@@ -22,7 +22,7 @@ const server = {
                 console.error("Error when handling socket!\n", e);
             }
         });
-        this.socketServer.listen(33955, () => {
+        this.socketServer.listen(() => {
             serverListenCallback(this.socketServer, callback);
         });
     },
@@ -32,8 +32,9 @@ const server = {
 };
 
 function serverListenCallback(server, callback) {
-    console.log("Server started on", server.address());
-    callback();
+    var port = server.address().port;
+    console.log("Server started on localhost:" + port);
+    callback(port);
 }
 
 module.exports = server;
