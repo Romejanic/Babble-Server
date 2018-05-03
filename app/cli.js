@@ -74,6 +74,21 @@ const cli = function(config, server, mysql, shutdownCallback) {
                             username = undefined;
                             password = undefined;
                             rl.setPrompt("Admin username > ");
+                        } else if(cmd.startsWith("connection_code")) {
+                            var args = cmd.substring("connection_code ".length).split(" ");
+                            if(args.length < 2) {
+                                console.log("Current connection code: " + server.connectionCode);
+                                console.log("To generate a code: connection_code <host> <port>");
+                            } else {
+                                var code = server.generateConnectionCode(args[0], args[1]);
+                                console.log("Connection code for " + args[0] + ":" + args[1] + " is " + code);
+                            }
+                        } else if(cmd.startsWith("list_clients")) {
+                            console.log("There are currently " + server.clients.length + " clients connected.");
+                            server.clients.forEach((v, i) => {
+                                var address = v.socket.remoteAddress + ":" + v.socket.remotePort + "(" + v.socket.remoteFamily + ")";
+                                console.log("#" + (i+1) + ": " + v.name + " (" + v.user_id + ") " + address); 
+                            });
                         } else {
                             console.log("Unrecognized command: " + cmd);
                         }

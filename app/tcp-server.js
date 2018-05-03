@@ -1,4 +1,5 @@
 const net = require("net");
+const ip = require("ip");
 
 const server = {
     clients: Array(),
@@ -8,7 +9,15 @@ const server = {
                 name: null,
                 user_id: null,
                 public_key: null,
-                socket: socket
+                socket: socket,
+                sendPacket: function(packet) {
+                    if(!packet.id) {
+                        throw "Object is not a packet (requires packet identifier)";
+                    }
+                    var json = JSON.stringify(packet);
+                    var encrypted = rsa.encryptVerified(json, this.public_key);
+                    this.socket.write(encrypted);
+                }
             };
             this.clients.push(client);
             rsa.sendKeyExchangePacket(socket);
@@ -17,19 +26,29 @@ const server = {
                 try {
                     var packet = JSON.parse(data.toString());
                     if(packet) {
-                        if(packet.id == "rsa_public_key" && typeof packet.payload === "string") {
-                            client.public_key = packet.payload;
+                        if(!client.public_key) {
+                            if(packet.id == "rsa_public_key" && typeof packet.payload === "string") {
+                                client.public_key = packet.payload;
+                            } else {
+                                throw "Packet must be an rsa_public_key with string payload.";
+                                socket.close();
+                            }
                         } else {
-                            throw "Packet must be an rsa_public_key with string payload.";
-                            socket.close();
+                            this.handlePacket(packet, client);
                         }
                     }
                 } catch(e) {
                     var error = {
-                        id: "bad_packet_error",
-                        payload: e
+                        id: "bad_format_error"
                     };
-                    socket.write(JSON.stringify(error));
+                    if(e) {
+                        error.payload = e;
+                    }
+                    if(client.public_key) {
+                        client.sendPacket(error);
+                    } else {
+                        socket.write(JSON.stringify(error));
+                    }
                 }
             });
             socket.on("error", (e) => {
@@ -56,12 +75,31 @@ const server = {
     },
     stop: function() {
         this.socketServer.close();
+        this.clients.forEach((client) => {
+            client.socket.end();
+        });
+    },
+
+    handlePacket: function(packet, client) {
+        client.sendPacket({
+            id: "unrecognised_packet",
+            payload: packet ? packet.id : undefined
+        });
+    },
+
+    generateConnectionCode: function(host, port) {
+        var socketAddr = host + ":" + port;
+        return new Buffer(socketAddr).toString("base64");
     }
 };
 
-function serverListenCallback(server, callback) {
-    var port = server.address().port;
-    console.log("Server started on localhost:" + port);
+function serverListenCallback(socket, callback) {
+    var host = ip.address();
+    var port = socket.address().port;
+    server.connectionCode = server.generateConnectionCode(host, port);
+
+    console.log("== Server started! Clients may connect with " + server.connectionCode + " ==");
+    console.log("In order to use another host address, you can generate a new connection code with the command connection_code.");
     callback(port);
 }
 
