@@ -68,8 +68,10 @@ if(!config) {
     mysql.connect(config.db);
 }
 
+const rsa = require("./rsa.js").generateKeypair();
+
 console.log("== Starting server... ==");
-const babbleServer = require("./babble-server.js");
+const babbleServer = require("./tcp-server.js");
 const cli = require("./cli.js")(config, babbleServer, mysql, () => {
     console.log("Shutting down server...");
     babbleServer.stop();
@@ -78,4 +80,4 @@ const cli = require("./cli.js")(config, babbleServer, mysql, () => {
     console.log("== Shut down server! ==");
     console.log("If the program hangs, you may now safely close it with Ctrl-C.");
 });
-babbleServer.start(config, cli.start);
+babbleServer.start(config, rsa, cli.start);

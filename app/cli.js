@@ -15,7 +15,6 @@ const cli = function(config, server, mysql, shutdownCallback) {
                     callback();
                 }
             });
-              
             mutableStdout.muted = false;
               
             var rl = readline.createInterface({

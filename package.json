@@ -10,6 +10,7 @@
     "start": "node app/main.js"
   },
   "dependencies": {
+    "keypair": "^1.0.1",
     "readline-sync": "^1.4.9",
     "sync-mysql": "^3.0.1"
   }
