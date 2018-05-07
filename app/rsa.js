@@ -6,26 +6,32 @@ const rsa = {
         this.rsaKeys = keypair();
         return this;
     },
-    encrypt: function(content, publicKey) {
+    encrypt: function(content, publicKey, disablePadding) {
         if(!publicKey) {
             publicKey = this.rsaKeys.private;
         }
         var buf = new Buffer(content);
-        return crypto.publicEncrypt(publicKey, buf);
+        return crypto.publicEncrypt({
+            key: publicKey,
+            padding: disablePadding ? crypto.constants.RSA_NO_PADDING : crypto.constants.RSA_PKCS1_OAEP_PADDING   
+        }, buf);
     },
-    decrypt: function(buffer, privateKey) {
+    decrypt: function(buffer, privateKey, disablePadding) {
         if(!privateKey) {
             privateKey = this.rsaKeys.public;
         }
-        var decrypt = crypto.publicDecrypt(privateKey, buffer);
+        var decrypt = crypto.publicDecrypt({
+            key: privateKey,
+            padding: disablePadding ? crypto.constants.RSA_NO_PADDING : crypto.constants.RSA_PKCS1_OAEP_PADDING   
+        }, buffer);
         return decrypt.toString();
     },
     encryptVerified: function(content, publicKey) {
         var publicEncrypt = this.encrypt(content);
-        return this.encrypt(publicEncrypt, publicKey);
+        return this.encrypt(publicEncrypt, publicKey, true);
     },
     decryptVerified: function(buffer, privateKey) {
-        var privateDecrypt = crypto.publicDecrypt(privateKey, buffer);
+        var privateDecrypt = crypto.publicDecrypt(privateKey, buffer, true);
         return this.decrypt(privateDecrypt);
     },
 
