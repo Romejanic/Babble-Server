@@ -3,7 +3,7 @@ const ip = require("ip");
 
 const server = {
     clients: Array(),
-    start: function(config, rsa, callback) {
+    start: function(config, rsa, auth, callback) {
         this.socketServer = net.createServer((socket) => {
             var client = {
                 name: null,
@@ -22,6 +22,7 @@ const server = {
             this.clients.push(client);
             rsa.sendKeyExchangePacket(socket);
 
+            socket.setTimeout(10000);
             socket.on("data", (data) => {
                 try {
                     var packet = JSON.parse(data.toString());
@@ -29,6 +30,9 @@ const server = {
                         if(!client.public_key) {
                             if(packet.id == "rsa_public_key" && typeof packet.payload === "string") {
                                 client.public_key = packet.payload;
+                                client.sendPacket({
+                                    id: "request_auth"
+                                });
                             } else {
                                 throw "Packet must be an rsa_public_key with string payload.";
                                 socket.close();
@@ -49,6 +53,17 @@ const server = {
                     } else {
                         socket.write(JSON.stringify(error));
                     }
+                }
+            });
+            socket.on("timeout", () => {
+                var packet = {
+                    id: "timeout"
+                };
+                if(client.public_key) {
+                    client.sendPacket(packet);
+                    socket.end();
+                } else {
+                    socket.end(JSON.stringify(packet));
                 }
             });
             socket.on("error", (e) => {
@@ -72,6 +87,8 @@ const server = {
         this.socketServer.listen(config.serverPort, () => {
             serverListenCallback(this.socketServer, callback);
         });
+
+        this.auth = auth;
     },
     stop: function() {
         this.socketServer.close();
@@ -81,10 +98,44 @@ const server = {
     },
 
     handlePacket: function(packet, client) {
-        client.sendPacket({
-            id: "unrecognised_packet",
-            payload: packet ? packet.id : undefined
-        });
+        if(packet.id == "authenticate") {
+            if(!packet.payload || !packet.payload.username || !packet.payload.password) {
+                client.sendPacket({
+                    id: "incomplete_packet",
+                    payload: "Authentication packets require a username and password in the payload"
+                });
+            } else {
+                var result = this.auth.checkLogin(packet.payload.username, packet.payload.password);
+                if(typeof result === "object") {
+                    client.sendPacket({
+                        id: "login_status",
+                        payload: {
+                            success: true,
+                            userId: result
+                        }
+                    });
+                    client.socket.setTimeout(0);
+                    client.socket.setKeepAlive(true);
+
+                    client.user_id = result.userId;
+                    client.name = result.name;
+                } else {
+                    client.sendPacket({
+                        id: "login_status",
+                        payload: {
+                            success: false,
+                            error: "Incorrect login"
+                        }
+                    });
+                    client.socket.end();
+                }
+            }
+        } else {
+            client.sendPacket({
+                id: "unrecognised_packet",
+                payload: packet ? packet.id : undefined
+            });
+        }
     },
 
     generateConnectionCode: function(host, port) {

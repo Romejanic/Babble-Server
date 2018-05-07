@@ -69,7 +69,7 @@ var processCommand = function(line, rl, mutableStdout, logout, server, mysql) {
                         if(query.affectedRows == 1) {
                             console.log("Deleted user: " + args[1]);
                         } else if(query.affectedRows < 1) {
-                            console.log("No user with name " + args[1] + " found!");
+                            console.log("No user with username " + args[1] + " found!");
                         }
                     }
                 }

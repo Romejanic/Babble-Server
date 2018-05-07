@@ -2,6 +2,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 const readLine = require("readline-sync");
 const mysql = require("./mysql.js");
+const auth = require("./authentication.js")(mysql);
 
 var config;
 try {
@@ -34,8 +35,7 @@ if(!config) {
     while(readLine.question("Please confirm your admin password > ", { hideEchoBack: true }) !== config.adminPassword) {
         console.log("Err: Passwords do not match!");
     }
-    var adminSalt = Array(17).join((Math.random().toString(36)+'00000000000000000').slice(2, 18)).slice(0, 16);
-    config.adminPassword = adminSalt + crypto.createHmac("sha256", adminSalt).update(adminSalt+config.adminPassword).digest("base64");
+    config.adminPassword = auth.hashPassword(config.adminPassword);
 
     console.log("== MySQL Setup ==");
     console.log("The Babble server requires MySQL to store user and message information.");
@@ -73,7 +73,7 @@ const rsa = require("./rsa.js").generateKeypair();
 
 console.log("== Starting server... ==");
 const babbleServer = require("./tcp-server.js");
-const cli = require("./cli.js")(config, babbleServer, mysql, () => {
+const cli = require("./cli.js")(config, babbleServer, mysql, auth, () => {
     console.log("Shutting down server...");
     babbleServer.stop();
     mysql.disconnect();
@@ -81,4 +81,4 @@ const cli = require("./cli.js")(config, babbleServer, mysql, () => {
     console.log("== Shut down server! ==");
     console.log("If the program hangs, you may now safely close it with Ctrl-C.");
 });
-babbleServer.start(config, rsa, cli.start);
+babbleServer.start(config, rsa, auth, cli.start);

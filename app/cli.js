@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const Writable = require('stream').Writable;
 const processCommand = require("./cmd.js");
 
-const cli = function(config, server, mysql, shutdownCallback) {
+const cli = function(config, server, mysql, auth, shutdownCallback) {
     return {
         start: function() {
             var username, password;
@@ -49,11 +49,7 @@ const cli = function(config, server, mysql, shutdownCallback) {
                         rl.setPrompt("Admin username > ");
                         return;
                     } else {
-                        password = line.trim();
-                        var adminSalt = config.adminPassword.substring(0, 16);
-                        var adminPassword = config.adminPassword.substring(16);
-                        password = crypto.createHmac("sha256", adminSalt).update(adminSalt+password).digest("base64");
-                        if(username !== config.adminUsername || password !== adminPassword) {
+                        if(username !== config.adminUsername || !auth.confirmHashed(line.trim(), config.adminPassword)) {
                             console.error("Invalid login credentials!");
                             username = undefined;
                             password = undefined;
@@ -62,6 +58,7 @@ const cli = function(config, server, mysql, shutdownCallback) {
                             console.log("Welcome, " + username + "!");
                             console.log("Type 'help' for a list of commands.");
                             rl.setPrompt("> ");
+                            password = true;
                         }
                     }
                 } else if(username && password) {
