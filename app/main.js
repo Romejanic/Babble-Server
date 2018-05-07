@@ -66,6 +66,7 @@ if(!config) {
 } else {
     console.log("== Connecting to MySQL... ==");
     mysql.connect(config.db);
+    mysql.query("USE babble");
 }
 
 const rsa = require("./rsa.js").generateKeypair();

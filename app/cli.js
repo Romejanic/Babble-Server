@@ -1,6 +1,7 @@
 const readline = require("readline");
 const crypto = require("crypto");
 const Writable = require('stream').Writable;
+const processCommand = require("./cmd.js");
 
 const cli = function(config, server, mysql, shutdownCallback) {
     return {
@@ -26,7 +27,7 @@ const cli = function(config, server, mysql, shutdownCallback) {
             rl.prompt();
 
             rl.on("line", (line) => {
-                if(!username) {
+                if(!username && !password) {
                     if(!line || line.trim().length <= 0) {
                         console.error("Invalid username!");
                         username = undefined;
@@ -38,7 +39,7 @@ const cli = function(config, server, mysql, shutdownCallback) {
                         rl.prompt();
                         mutableStdout.muted = true;
                     }
-                } else if(!password) {
+                } else if(username && !password) {
                     mutableStdout.muted = false;
                     console.log();
                     if(!line || line.trim().length <= 0) {
@@ -64,35 +65,11 @@ const cli = function(config, server, mysql, shutdownCallback) {
                         }
                     }
                 } else if(username && password) {
-                    var cmd = line.trim();
-                    if(cmd.length > 0) {
-                        if(cmd.startsWith("shutdown")) {
-                            rl.close();
-                            mutableStdout.muted = true;
-                        } else if(cmd.startsWith("logout")) {
-                            console.log("Goodbye, " + username + "!");
-                            username = undefined;
-                            password = undefined;
-                            rl.setPrompt("Admin username > ");
-                        } else if(cmd.startsWith("connection_code")) {
-                            var args = cmd.substring("connection_code ".length).split(" ");
-                            if(args.length < 2) {
-                                console.log("Current connection code: " + server.connectionCode);
-                                console.log("To generate a code: connection_code <host> <port>");
-                            } else {
-                                var code = server.generateConnectionCode(args[0], args[1]);
-                                console.log("Connection code for " + args[0] + ":" + args[1] + " is " + code);
-                            }
-                        } else if(cmd.startsWith("list_clients")) {
-                            console.log("There are currently " + server.clients.length + " clients connected.");
-                            server.clients.forEach((v, i) => {
-                                var address = v.socket.remoteAddress + ":" + v.socket.remotePort + "(" + v.socket.remoteFamily + ")";
-                                console.log("#" + (i+1) + ": " + v.name + " (" + v.user_id + ") " + address); 
-                            });
-                        } else {
-                            console.log("Unrecognized command: " + cmd);
-                        }
-                    }
+                    processCommand(line, rl, mutableStdout, () => {
+                        username = undefined;
+                        password = undefined;
+                        rl.setPrompt("Admin username > ");
+                    }, server, mysql);
                 } else {
                     console.log("You must be logged in to perform actions.");
                     username = undefined;

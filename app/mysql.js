@@ -30,6 +30,14 @@ var mysqlModule = {
             console.error("Failed to load SQL file: " + sqlName + ".sql");
         }
         return false;
+    },
+
+    query: function(sql, values) {
+        try {
+            return this.connection.query(sql, values);
+        } catch(e) {
+            return e;
+        }
     }
 };
 
