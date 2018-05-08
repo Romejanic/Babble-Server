@@ -62,7 +62,7 @@ const cli = function(config, server, mysql, auth, shutdownCallback) {
                         }
                     }
                 } else if(username && password) {
-                    processCommand(line, rl, mutableStdout, () => {
+                    processCommand(line, rl, auth, mutableStdout, () => {
                         username = undefined;
                         password = undefined;
                         rl.setPrompt("Admin username > ");

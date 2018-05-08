@@ -25,7 +25,13 @@ const server = {
             socket.setTimeout(10000);
             socket.on("data", (data) => {
                 try {
-                    var packet = JSON.parse(data.toString());
+                    var packetJson;
+                    if(client.public_key) {
+                        packetJson = rsa.decryptVerified(data, rsa.rsaKeys.private, client.public_key);
+                    } else {
+                        packetJson = data.toString();
+                    }
+                    var packet = JSON.parse(packetJson);
                     if(packet) {
                         if(!client.public_key) {
                             if(packet.id == "rsa_public_key" && typeof packet.payload === "string") {

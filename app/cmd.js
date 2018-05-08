@@ -1,4 +1,4 @@
-var processCommand = function(line, rl, mutableStdout, logout, server, mysql) {
+var processCommand = function(line, rl, auth, mutableStdout, logout, server, mysql) {
     var cmd = line.trim();
     if(cmd.length > 0) {
         if(cmd.startsWith("shutdown")) {
@@ -49,7 +49,7 @@ var processCommand = function(line, rl, mutableStdout, logout, server, mysql) {
                             displayName += args[i] + " ";
                         }
                         displayName = displayName.trim();
-                        var password = "password";
+                        var password = auth.hashPassword("password");
 
                         var userCheck = mysql.query("SELECT name FROM users WHERE username = ?", [ username ]);
                         if(userCheck.length > 0) {
