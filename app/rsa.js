@@ -6,17 +6,17 @@ const rsa = {
         this.rsaKeys = keypair();
         return this;
     },
-    encrypt: function(content, publicKey, disablePadding) {
+    encrypt: function(content, publicKey, disablePadding = false, isString = true) {
         if(!publicKey) {
             publicKey = this.rsaKeys.private;
         }
-        var buf = new Buffer(content);
+        var buf = isString ? new Buffer(content) : content;
         return crypto.publicEncrypt({
             key: publicKey,
             padding: disablePadding ? crypto.constants.RSA_NO_PADDING : crypto.constants.RSA_PKCS1_OAEP_PADDING   
         }, buf);
     },
-    decrypt: function(buffer, privateKey, disablePadding) {
+    decrypt: function(buffer, privateKey, disablePadding = false, asString = true) {
         if(!privateKey) {
             privateKey = this.rsaKeys.public;
         }
@@ -24,15 +24,20 @@ const rsa = {
             key: privateKey,
             padding: disablePadding ? crypto.constants.RSA_NO_PADDING : crypto.constants.RSA_PKCS1_OAEP_PADDING   
         }, buffer);
-        return decrypt.toString();
+        return asString ? decrypt.toString() : decrypt;
     },
     encryptVerified: function(content, publicKey) {
         var publicEncrypt = this.encrypt(content);
-        return this.encrypt(publicEncrypt, publicKey, true);
+        return this.encrypt(publicEncrypt, publicKey, true, false);
     },
-    decryptVerified: function(buffer, privateKey) {
-        var privateDecrypt = crypto.publicDecrypt(privateKey, buffer, true);
-        return this.decrypt(privateDecrypt);
+    decryptVerified: function(buffer, publicKey) {
+        var privateDecrypt = this.decrypt(buffer, this.rsaKeys.private, true, false);
+        return this.logAndReturn(this.decrypt(privateDecrypt, publicKey));
+    },
+
+    logAndReturn: function(data) {
+        console.log("data =", data);
+        return data;
     },
 
     sendKeyExchangePacket: function(socket) {

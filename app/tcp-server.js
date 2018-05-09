@@ -27,7 +27,7 @@ const server = {
                 try {
                     var packetJson;
                     if(client.public_key) {
-                        packetJson = rsa.decryptVerified(data, rsa.rsaKeys.private, client.public_key);
+                        packetJson = rsa.decryptVerified(data, client.public_key);
                     } else {
                         packetJson = data.toString();
                     }
@@ -39,6 +39,7 @@ const server = {
                                 client.sendPacket({
                                     id: "request_auth"
                                 });
+                                console.log("requesting authentication, client's key is " + client.public_key);
                             } else {
                                 throw "Packet must be an rsa_public_key with string payload.";
                                 socket.close();
@@ -53,6 +54,9 @@ const server = {
                     };
                     if(e) {
                         error.payload = e;
+                    }
+                    if(typeof e == "object") {
+                        console.error("error in packet parser", e);
                     }
                     if(client.public_key) {
                         client.sendPacket(error);
@@ -71,6 +75,7 @@ const server = {
                 } else {
                     socket.end(JSON.stringify(packet));
                 }
+                console.log("timeout");
             });
             socket.on("error", (e) => {
                 console.error("Error when handling socket!\n", e);
