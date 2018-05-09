@@ -20,10 +20,11 @@ const auth = function(mysql) {
         checkLogin: function(username, password) {
             var query = mysql.query("SELECT id, name, password FROM users WHERE username = ?", [ username ]);
             if(query.length == 1) {
-                if(this.confirmHashed(password, query.password)) {
+                var userData = query[0];
+                if(this.confirmHashed(password, userData.password)) {
                     return {
-                        id: query.id,
-                        name: query.name
+                        id: userData.id,
+                        name: userData.name
                     };
                 } else {
                     return false;
