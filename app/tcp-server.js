@@ -41,7 +41,6 @@ const server = {
                                 client.sendPacket({
                                     id: "request_auth"
                                 });
-                                console.log("requesting authentication, client's key is " + client.public_key);
                             } else {
                                 throw "Packet must be an rsa_public_key with string payload.";
                                 socket.close();
