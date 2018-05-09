@@ -15,7 +15,8 @@ const server = {
                         throw "Object is not a packet (requires packet identifier)";
                     }
                     var json = JSON.stringify(packet);
-                    var encrypted = rsa.encryptVerified(json, this.public_key);
+                    // var encrypted = rsa.encryptVerified(json, this.public_key); // disabled temporarily
+                    var encrypted = rsa.encrypt(json, this.public_key);
                     this.socket.write(encrypted);
                 }
             };
@@ -27,7 +28,8 @@ const server = {
                 try {
                     var packetJson;
                     if(client.public_key) {
-                        packetJson = rsa.decryptVerified(data, client.public_key);
+                        // packetJson = rsa.decryptVerified(data, client.public_key);
+                        packetJson = rsa.decrypt(data, rsa.rsaKeys.private);
                     } else {
                         packetJson = data.toString();
                     }
