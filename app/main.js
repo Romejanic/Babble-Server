@@ -81,4 +81,4 @@ const cli = require("./cli.js")(config, babbleServer, mysql, auth, () => {
     console.log("== Shut down server! ==");
     console.log("If the program hangs, you may now safely close it with Ctrl-C.");
 });
-babbleServer.start(config, rsa, auth, cli.start);
+babbleServer.start(config, rsa, auth, mysql, cli.start);

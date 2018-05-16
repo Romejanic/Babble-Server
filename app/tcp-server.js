@@ -3,7 +3,7 @@ const ip = require("ip");
 
 const server = {
     clients: Array(),
-    start: function(config, rsa, auth, callback) {
+    start: function(config, rsa, auth, mysql, callback) {
         this.socketServer = net.createServer((socket) => {
             var client = {
                 name: null,
@@ -101,6 +101,7 @@ const server = {
         });
 
         this.auth = auth;
+        this.mysql = mysql;
     },
     stop: function() {
         this.socketServer.close();
@@ -131,7 +132,7 @@ const server = {
                     client.socket.setTimeout(0);
                     client.socket.setKeepAlive(true);
 
-                    client.user_id = result.userId;
+                    client.user_id = result.id;
                     client.name = result.name;
                 } else {
                     client.sendPacket({
@@ -143,6 +144,36 @@ const server = {
                     });
                     client.socket.end();
                 }
+            }
+        } else if(packet.id === "update_details") {
+            if(!packet.payload || typeof packet.payload !== "object") {
+                client.sendPacket({
+                    id: "bad_format_error",
+                    payload: "Payload must be object"
+                });
+            } else {
+                var profileChanges = packet.payload;
+                if(profileChanges.name) {
+                    this.mysql.query("UPDATE users SET name = ? WHERE id = ?", [profileChanges.name, client.user_id]);
+                }
+                if(profileChanges.password) {
+                    var pwHash = this.auth.hashPassword(profileChanges.password);
+                    this.mysql.query("UPDATE users SET password = ? WHERE id = ?", [pwHash, client.user_id]);
+                }
+                if(profileChanges.profilePic) {
+                    this.mysql.query("UPDATE users SET image = ? WHERE id = ?", [profileChanges.profilePic, client.user_id]);
+                }
+
+                // Check if this is first login
+                var firstLogin = this.mysql.query("SELECT lastLogin FROM users WHERE id = ?", [client.user_id]);
+                if(!firstLogin[0].lastLogin) {
+                    this.mysql.query("UPDATE users SET lastLogin = ? WHERE id = ?", [Date.now(), client.user_id]);
+                }
+
+                client.sendPacket({
+                    id: "confirm",
+                    payload: "User profile updated."
+                });
             }
         } else {
             client.sendPacket({
