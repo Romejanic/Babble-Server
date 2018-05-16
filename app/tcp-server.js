@@ -107,6 +107,8 @@ const server = {
         this.clients.forEach((client) => {
             client.socket.end();
         });
+        console.log("Disconnected", this.clients.length, "active clients.");
+        this.clients.splice(0, this.clients.length);
     },
 
     handlePacket: function(packet, client) {

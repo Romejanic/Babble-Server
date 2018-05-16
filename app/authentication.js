@@ -3,14 +3,12 @@ const crypto = require("crypto");
 const auth = function(mysql) {
     return {
         hashPassword: function(password) {
-            // var salt = Array(17).join((Math.random().toString(36)+'00000000000000000').slice(2, 18)).slice(0, 16);
             var salt = crypto.randomBytes(17).toString("base64").slice(0, 24);
             return salt + crypto.createHmac("sha256", salt).update(salt+password).digest("base64");
         },
         confirmHashed: function(password, hash) {
             var salt = hash.substring(0, 24);
             var pwHash = hash.substring(24);
-            // console.log(salt, pwHash);
             password = crypto.createHmac("sha256", salt).update(salt+password).digest("base64");
             return password === pwHash;
         },
