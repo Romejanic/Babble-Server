@@ -82,6 +82,9 @@ const server = {
                 console.error("Error when handling socket!\n", e);
             });
             socket.on("close", () => {
+                if(client.user_id) {
+                    // send last login to db
+                }
                 this.clients.splice(this.clients.indexOf(client), 1);
             });
         });
