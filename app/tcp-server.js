@@ -191,6 +191,12 @@ const server = {
                 });
                 client.socket.end();
             }
+        } else if(packet.id === "get_users") {
+            var users = this.mysql.query("SELECT id, name, image FROM users");
+            client.sendPacket({
+                id: "user_list",
+                payload: users
+            });
         } else {
             client.sendPacket({
                 id: "unrecognised_packet",
