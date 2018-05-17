@@ -76,14 +76,13 @@ const server = {
                 } else {
                     socket.end(JSON.stringify(packet));
                 }
-                console.log("timeout");
             });
             socket.on("error", (e) => {
                 console.error("Error when handling socket!\n", e);
             });
             socket.on("close", () => {
-                if(client.user_id) {
-                    // send last login to db
+                if(client.user_id && !client.firstLogin) {
+                    this.mysql.query("UPDATE users SET lastLogin = ? WHERE id = ?", [Date.now(), client.user_id]);
                 }
                 this.clients.splice(this.clients.indexOf(client), 1);
             });
@@ -137,6 +136,9 @@ const server = {
 
                     client.user_id = result.id;
                     client.name = result.name;
+                    if(result.firstLogin) {
+                        client.firstLogin = result.firstLogin;
+                    }
                 } else {
                     client.sendPacket({
                         id: "login_status",
@@ -167,7 +169,7 @@ const server = {
                     this.mysql.query("UPDATE users SET image = ? WHERE id = ?", [profileChanges.profilePic, client.user_id]);
                 }
 
-                // Check if this is first login
+                // Check if this is the first login
                 var firstLogin = this.mysql.query("SELECT lastLogin FROM users WHERE id = ?", [client.user_id]);
                 if(!firstLogin[0].lastLogin) {
                     this.mysql.query("UPDATE users SET lastLogin = ? WHERE id = ?", [Date.now(), client.user_id]);
@@ -177,6 +179,17 @@ const server = {
                     id: "confirm",
                     payload: "User profile updated."
                 });
+            }
+        } else if(packet.id === "bad_request") {
+            if(packet.payload === "auth_already_requested") {
+                client.sendPacket({
+                    id: "login_status",
+                    payload: {
+                        success: false,
+                        error: "No credentials, please try again."
+                    }
+                });
+                client.socket.end();
             }
         } else {
             client.sendPacket({
