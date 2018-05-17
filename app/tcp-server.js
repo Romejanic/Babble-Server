@@ -193,6 +193,11 @@ const server = {
             }
         } else if(packet.id === "get_users") {
             var users = this.mysql.query("SELECT id, name, image FROM users");
+            users.forEach((v) => {
+                if(v.id == client.user_id) {
+                    v.self = true;
+                }
+            });
             client.sendPacket({
                 id: "user_list",
                 payload: users
