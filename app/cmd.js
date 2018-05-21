@@ -74,6 +74,54 @@ var processCommand = function(line, rl, auth, mutableStdout, logout, server, mys
                     }
                 }
             }
+        } else if(cmd.startsWith("debug")) {
+            var args = cmd.substring("debug ".length).split(" ");
+            if(args.length < 4 || args[0] !== "--senddummymessage") {
+                console.error("Usage: debug --senddummymessage <sender> <conversation> <content>");
+            } else {
+                try {
+                    var senderID = parseInt(args[1]);
+                    var convoID  = parseInt(args[2]);
+                    var content  = args[3];
+
+                    var sender = mysql.query("SELECT id FROM users WHERE id = ?", [senderID]);
+                    if(!sender.length || sender.length <= 0) {
+                        console.error("No user with ID " + senderID + " was found!");
+                        return;
+                    }
+                    var convo = mysql.query("SELECT id FROM conversations WHERE id = ?", [convoID]);
+                    if(!convo.length || convo.length <= 0) {
+                        console.error("No conversation with ID " + convoID + " was found!");
+                        return;
+                    }
+                    var isMember = mysql.query("SELECT * FROM conversation_members WHERE userId = ? AND conversation = ?", [sender[0].id, convo[0].id]);
+                    if(!isMember.length || !isMember.length <= 0) {
+                        console.error("Sender ID " + senderID + " is not a member of conversation ID " + convoID);
+                        return;
+                    }
+
+                    this.mysql.query("INSERT INTO messages (sender, conversation, type, content, timestamp) VALUES (?, ?, ?, ?, ?)", [sender[0].id, convo[0].id, "text", content, Date.now()]);
+
+                    var otherMembers = this.mysql.query("SELECT userId FROM conversation_members WHERE conversation = ? AND userId != ?", [convo[0].id, sender[0].id]);
+                    if(otherMembers && otherMembers.length > 0) {
+                        message.sender = sender;
+                        this.clients.forEach((c) => {
+                            otherMembers.forEach((v) => {
+                                if(c.user_id == v.userId) {
+                                    c.sendPacket({
+                                        id: "message",
+                                        payload: message
+                                    });
+                                }
+                            });
+                        });
+                    }
+
+                    console.log("Message sent to conversation ID " + convoID + " and " + otherMembers.length + " members (if online)");
+                } catch(e) {
+                    console.error("An error occoured executing the command. Make sure you entered valid numbers for the sender and conversation ID.");
+                }
+            }
         } else {
             console.log("Unrecognized command: " + cmd);
         }

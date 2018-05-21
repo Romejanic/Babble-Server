@@ -138,6 +138,12 @@ const server = {
                     client.name = result.name;
                     if(result.firstLogin) {
                         client.firstLogin = result.firstLogin;
+                    } else {
+                        var messages = this.mysql.query("SELECT * FROM messages WHERE conversation IN (SELECT conversation FROM conversation_members WHERE userId = ?) AND timestamp >= (SELECT lastLogin FROM users WHERE id = ?)", [client.user_id]);
+                        client.sendPacket({
+                            id: "new_messages",
+                            payload: messages
+                        });
                     }
                 } else {
                     client.sendPacket({
@@ -220,7 +226,7 @@ const server = {
             var message = packet.payload;
             var sender  = client.user_id;
 
-            var isMember = this.mysql.query("SELECT (userId) FROM conversation_members WHERE conversation = ? AND userId = ?", [message.conversation, sender]);
+            var isMember = this.mysql.query("SELECT userId FROM conversation_members WHERE conversation = ? AND userId = ?", [message.conversation, sender]);
             if(!isMember || !isMember.length || isMember.length <= 0) {
                 client.sendPacket({
                     id: "message_status",
@@ -233,6 +239,21 @@ const server = {
             }
 
             this.mysql.query("INSERT INTO messages (sender, conversation, type, content, timestamp) VALUES (?, ?, ?, ?, ?)", [sender, message.conversation, message.type, message.content, Date.now()]);
+
+            var otherMembers = this.mysql.query("SELECT userId FROM conversation_members WHERE conversation = ? AND userId != ?", [message.conversation, sender]);
+            if(otherMembers && otherMembers.length > 0) {
+                message.sender = sender;
+                this.clients.forEach((c) => {
+                    otherMembers.forEach((v) => {
+                        if(c.user_id == v.userId) {
+                            c.sendPacket({
+                                id: "message",
+                                payload: message
+                            });
+                        }
+                    });
+                });
+            }
         } else {
             client.sendPacket({
                 id: "unrecognised_packet",
