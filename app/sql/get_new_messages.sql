@@ -1,0 +1,1 @@
+SELECT * FROM messages WHERE conversation IN (SELECT conversation FROM conversation_members WHERE userId = ?) AND timestamp >= (SELECT lastLogin FROM users WHERE id = ?);

@@ -202,6 +202,37 @@ const server = {
                 id: "user_list",
                 payload: users
             });
+        } else if(packet.id === "create_conversation") {
+            var convo = packet.payload;
+            var q = this.mysql.query("INSERT INTO conversations (name, image) VALUES (?, ?)", [convo.name, convo.image]);
+            this.mysql.query("INSERT INTO conversation_members (userId, conversation) VALUES (?, ?)", [client.user_id, q.insertId]);
+            convo.members.forEach((v) => {
+                this.mysql.query("INSERT INTO conversation_members (userId, conversation) VALUES (?, ?)", [v, q.insertId]);
+            });
+            client.sendPacket({
+                id: "conversation_created",
+                payload: {
+                    name: convo.name,
+                    id: q.insertId
+                }
+            });
+        } else if(packet.id === "message") {
+            var message = packet.payload;
+            var sender  = client.user_id;
+
+            var isMember = this.mysql.query("SELECT (userId) FROM conversation_members WHERE conversation = ? AND userId = ?", [message.conversation, sender]);
+            if(!isMember || !isMember.length || isMember.length <= 0) {
+                client.sendPacket({
+                    id: "message_status",
+                    payload: {
+                        success: false,
+                        error: "You are not a member of this conversation!"
+                    }
+                });
+                return;
+            }
+
+            this.mysql.query("INSERT INTO messages (sender, conversation, type, content, timestamp) VALUES (?, ?, ?, ?, ?)", [sender, message.conversation, message.type, message.content, Date.now()]);
         } else {
             client.sendPacket({
                 id: "unrecognised_packet",

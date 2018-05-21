@@ -1,5 +1,6 @@
 const MySQL = require("sync-mysql");
 const fs = require("fs");
+const path = require("path");
 
 var mysqlModule = {
     connect: function(config) {
@@ -17,7 +18,7 @@ var mysqlModule = {
     },
 
     executeSqlFile: function(sqlName, values) {
-        var sql = fs.readFileSync(__dirname + "/sql/" + sqlName + ".sql", { encoding: "utf-8" });
+        var sql = fs.readFileSync(path.join(__dirname, "sql", sqlName + ".sql"), { encoding: "utf-8" });
         if(sql) {
             sql.split("\n").forEach((query) => {
                 if(!query || query.trim().length <= 0) {
