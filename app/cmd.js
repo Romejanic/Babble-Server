@@ -82,7 +82,11 @@ var processCommand = function(line, rl, auth, mutableStdout, logout, server, mys
                 try {
                     var senderID = parseInt(args[1]);
                     var convoID  = parseInt(args[2]);
-                    var content  = args[3];
+                    var content  = "";
+                    for(var i = 3; i < args.length; i++) {
+                        content += args[i] + " ";
+                    }
+                    content = content.trim();
 
                     var sender = mysql.query("SELECT id FROM users WHERE id = ?", [senderID]);
                     if(!sender.length || sender.length <= 0) {
@@ -95,17 +99,23 @@ var processCommand = function(line, rl, auth, mutableStdout, logout, server, mys
                         return;
                     }
                     var isMember = mysql.query("SELECT * FROM conversation_members WHERE userId = ? AND conversation = ?", [sender[0].id, convo[0].id]);
-                    if(!isMember.length || !isMember.length <= 0) {
-                        console.error("Sender ID " + senderID + " is not a member of conversation ID " + convoID);
+                    if(!isMember.length || isMember.length <= 0) {
+                        console.error("Sender ID " + sender[0].id + " is not a member of conversation ID " + convo[0].id);
                         return;
                     }
 
-                    this.mysql.query("INSERT INTO messages (sender, conversation, type, content, timestamp) VALUES (?, ?, ?, ?, ?)", [sender[0].id, convo[0].id, "text", content, Date.now()]);
+                    mysql.query("INSERT INTO messages (sender, conversation, type, content, timestamp) VALUES (?, ?, ?, ?, ?)", [sender[0].id, convo[0].id, "text", content, Date.now()]);
 
-                    var otherMembers = this.mysql.query("SELECT userId FROM conversation_members WHERE conversation = ? AND userId != ?", [convo[0].id, sender[0].id]);
+                    var otherMembers = mysql.query("SELECT userId FROM conversation_members WHERE conversation = ? AND userId != ?", [convo[0].id, sender[0].id]);
+                    var message = {
+                        sender: senderID,
+                        conversation: convoID,
+                        type: "text",
+                        content: content,
+                        timestamp: Date.now()
+                    };
                     if(otherMembers && otherMembers.length > 0) {
-                        message.sender = sender;
-                        this.clients.forEach((c) => {
+                        server.clients.forEach((c) => {
                             otherMembers.forEach((v) => {
                                 if(c.user_id == v.userId) {
                                     c.sendPacket({
@@ -120,6 +130,7 @@ var processCommand = function(line, rl, auth, mutableStdout, logout, server, mys
                     console.log("Message sent to conversation ID " + convoID + " and " + otherMembers.length + " members (if online)");
                 } catch(e) {
                     console.error("An error occoured executing the command. Make sure you entered valid numbers for the sender and conversation ID.");
+                    console.error(e);
                 }
             }
         } else {
