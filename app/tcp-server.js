@@ -214,6 +214,14 @@ const server = {
             this.mysql.query("INSERT INTO conversation_members (userId, conversation) VALUES (?, ?)", [client.user_id, q.insertId]);
             convo.members.forEach((v) => {
                 this.mysql.query("INSERT INTO conversation_members (userId, conversation) VALUES (?, ?)", [v, q.insertId]);
+                this.clients.forEach((c) => {
+                    if(c.user_id == v) {
+                        c.sendPacket({
+                            id: "new_conversation",
+                            payload: convo
+                        });
+                    }
+                });
             });
             client.sendPacket({
                 id: "conversation_created",
