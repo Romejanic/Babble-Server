@@ -139,10 +139,19 @@ const server = {
                         client.firstLogin = result.firstLogin;
                     } else {
                         var messages = this.mysql.query("SELECT * FROM messages WHERE conversation IN (SELECT conversation FROM conversation_members WHERE userId = ?) AND timestamp >= (SELECT lastLogin FROM users WHERE id = ?)", [client.user_id]);
-                        client.sendPacket({
-                            id: "new_messages",
-                            payload: messages
-                        });
+                        if(messages.length && messages.length > 0) {
+                            client.sendPacket({
+                                id: "new_messages",
+                                payload: messages
+                            });
+                        }
+                        var myConvos = this.mysql.query("SELECT conversation FROM conversation_members WHERE userId = ?", [client.user_id]);
+                        if(myConvos.length && myConvos.length > 0) {
+                            client.sendPacket({
+                                id: "sync_convos",
+                                payload: myConvos
+                            });
+                        }
                     }
                 } else {
                     client.sendPacket({
@@ -258,6 +267,16 @@ const server = {
                                 payload: message
                             });
                         }
+                    });
+                });
+            }
+        } else if(packet.id === "sync_convos") {
+            var convos = this.mysql.query("SELECT * FROM conversations WHERE id IN ?", [packet.payload]);
+            if(convos.length && convos.length > 0) {
+                convos.forEach((convo) => {
+                    client.sendPacket({
+                        id: "new_conversation",
+                        payload: convo
                     });
                 });
             }
