@@ -9,7 +9,7 @@ const server = {
             var client = {
                 name: null,
                 user_id: null,
-                encryption: null,
+                encryption: Encrypt(),
                 socket: socket,
                 sendPacket: function(packet) {
                     if(!packet.id) {
@@ -23,16 +23,20 @@ const server = {
                 }
             };
             this.clients.push(client);
-            client.encryption = Encrypt();
+            client.encryption.onAesKeyGenerated = () => {
+                client.sendPacket({
+                    id: "request_auth"
+                });
+            };
 
-            socket.setTimeout(10000);
+            socket.setTimeout(60000);
             socket.on("data", (data) => {
                 try {
                     var packetJson;
                     if(client.encryption.aesKey) {
                         // packetJson = rsa.decryptVerified(data, client.public_key);
                         // packetJson = rsa.decrypt(data, rsa.rsaKeys.private);
-                        packetJson = client.encryption.decrypt(data);
+                        packetJson = client.encryption.decrypt(data.toString());
                     } else {
                         packetJson = data.toString();
                     }
