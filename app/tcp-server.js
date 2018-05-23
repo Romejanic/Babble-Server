@@ -219,9 +219,9 @@ const server = {
         } else if(packet.id === "create_conversation") {
             var convo = packet.payload;
             var q = this.mysql.query("INSERT INTO conversations (name, image) VALUES (?, ?)", [convo.name, convo.image]);
-            this.mysql.query("INSERT INTO conversation_members (userId, conversation) VALUES (?, ?)", [client.user_id, q.insertId]);
+            convo.id = q.insertId;
             convo.members.forEach((v) => {
-                this.mysql.query("INSERT INTO conversation_members (userId, conversation) VALUES (?, ?)", [v, q.insertId]);
+                this.mysql.query("INSERT INTO conversation_members (userId, conversation) VALUES (?, ?)", [v, convo.id]);
                 this.clients.forEach((c) => {
                     if(c.user_id == v) {
                         c.sendPacket({
@@ -235,7 +235,7 @@ const server = {
                 id: "conversation_created",
                 payload: {
                     name: convo.name,
-                    id: q.insertId
+                    id: convo.id
                 }
             });
         } else if(packet.id === "message") {
@@ -271,15 +271,30 @@ const server = {
                 });
             }
         } else if(packet.id === "sync_convos") {
-            var convos = this.mysql.query("SELECT * FROM conversations WHERE id IN ?", [packet.payload]);
-            if(convos.length && convos.length > 0) {
-                convos.forEach((convo) => {
-                    client.sendPacket({
-                        id: "new_conversation",
-                        payload: convo
-                    });
+            packet.payload.forEach((id) => {
+                var convoInfo = this.mysql.query("SELECT * FROM conversations WHERE id = ?", [id]);
+                var members   = this.mysql.query("SELECT userId FROM conversation_members WHERE conversation = ?", [id]);
+                var messages  = this.mysql.query("SELECT sender, conversation, type, content FROM messages WHERE conversation = ?", [id]);
+
+                if(!convoInfo.length || convoInfo.length <= 0 || !members.length || members.length <= 0) {
+                    return;
+                }
+
+                var convo = convoInfo[0];
+                convo.members = [];
+                members.forEach((v) => {
+                    convo.members.push(v.userId);
                 });
-            }
+                convo.chatHistory = [];
+                messages.forEach((v) => {
+                    convo.chatHistory.push(v);
+                });
+
+                client.sendPacket({
+                    id: "new_conversation",
+                    payload: convo
+                });
+            });
         } else {
             client.sendPacket({
                 id: "unrecognised_packet",
