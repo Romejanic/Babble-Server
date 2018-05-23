@@ -69,8 +69,6 @@ if(!config) {
     mysql.query("USE babble");
 }
 
-const rsa = require("./rsa.js").generateKeypair();
-
 console.log("== Starting server... ==");
 const babbleServer = require("./tcp-server.js");
 const cli = require("./cli.js")(config, babbleServer, mysql, auth, () => {
@@ -81,4 +79,4 @@ const cli = require("./cli.js")(config, babbleServer, mysql, auth, () => {
     console.log("== Shut down server! ==");
     console.log("If the program hangs, you may now safely close it with Ctrl-C.");
 });
-babbleServer.start(config, rsa, auth, mysql, cli.start);
+babbleServer.start(config, auth, mysql, cli.start);

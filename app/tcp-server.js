@@ -1,14 +1,15 @@
 const net = require("net");
 const ip = require("ip");
+const Encrypt = require("./encrypt.js");
 
 const server = {
     clients: Array(),
-    start: function(config, rsa, auth, mysql, callback) {
+    start: function(config, auth, mysql, callback) {
         this.socketServer = net.createServer((socket) => {
             var client = {
                 name: null,
                 user_id: null,
-                public_key: null,
+                encryption: null,
                 socket: socket,
                 sendPacket: function(packet) {
                     if(!packet.id) {
@@ -16,35 +17,29 @@ const server = {
                     }
                     var json = JSON.stringify(packet);
                     // var encrypted = rsa.encryptVerified(json, this.public_key); // disabled temporarily
-                    var encrypted = rsa.encrypt(json, this.public_key);
+                    // var encrypted = rsa.encrypt(json, this.public_key);
+                    var encrypted = this.encryption.encrypt(json);
                     this.socket.write(encrypted);
                 }
             };
             this.clients.push(client);
-            rsa.sendKeyExchangePacket(socket);
+            client.encryption = Encrypt();
 
             socket.setTimeout(10000);
             socket.on("data", (data) => {
                 try {
                     var packetJson;
-                    if(client.public_key) {
+                    if(client.encryption.aesKey) {
                         // packetJson = rsa.decryptVerified(data, client.public_key);
-                        packetJson = rsa.decrypt(data, rsa.rsaKeys.private);
+                        // packetJson = rsa.decrypt(data, rsa.rsaKeys.private);
+                        packetJson = client.encryption.decrypt(data);
                     } else {
                         packetJson = data.toString();
                     }
                     var packet = JSON.parse(packetJson);
                     if(packet) {
-                        if(!client.public_key) {
-                            if(packet.id == "rsa_public_key" && typeof packet.payload === "string") {
-                                client.public_key = packet.payload;
-                                client.sendPacket({
-                                    id: "request_auth"
-                                });
-                            } else {
-                                throw "Packet must be an rsa_public_key with string payload.";
-                                socket.close();
-                            }
+                        if(!client.encryption.aesKey) {
+                            client.encryption.handleKeyExchangePacket(data, socket);
                         } else {
                             this.handlePacket(packet, client);
                         }
@@ -59,7 +54,7 @@ const server = {
                     if(typeof e == "object") {
                         console.error("error in packet parser", e);
                     }
-                    if(client.public_key) {
+                    if(client.encryption.aesKey) {
                         client.sendPacket(error);
                     } else {
                         socket.write(JSON.stringify(error));
@@ -70,7 +65,7 @@ const server = {
                 var packet = {
                     id: "timeout"
                 };
-                if(client.public_key) {
+                if(client.encryption.aesKey) {
                     client.sendPacket(packet);
                     socket.end();
                 } else {

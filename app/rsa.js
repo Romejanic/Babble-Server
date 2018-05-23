@@ -1,10 +1,23 @@
 const crypto = require("crypto");
 const keypair = require("keypair");
 
+const aesAlgorithm = "aes-256-ctr";
+const aesIv = "Hu0PyN0MdGdKHMLbgIm0xw==";
+
 const rsa = {
+    aesCipher: undefined,
+    aesDecipher: undefined,
+
     generateKeypair: function() {
         this.rsaKeys = keypair();
         return this;
+    },
+    generateAESKey: function() {
+        this.setAESKey(crypto.randomBytes(32));
+    },
+    setAESKey: function(key) {
+        this.aesCipher = crypto.createCipheriv(aesAlgorithm, key, aesIv);
+        this.aesDecipher = crypto.createCipheriv(aesAlgorithm, key, aesIv);
     },
     encrypt: function(content, publicKey, disablePadding = false, isString = true) {
         var buf = isString ? new Buffer(content) : content;
@@ -21,6 +34,12 @@ const rsa = {
         // }, buffer);
         var decrypt = crypto.privateDecrypt(privateKey, buffer);
         return asString ? decrypt.toString() : decrypt;
+    },
+    encryptAES: function(content, key) {
+
+    },
+    decryptAES: function(content, key) {
+
     },
     encryptVerified: function(content, publicKey) {
         var publicEncrypt = this.encrypt(content, this.rsaKeys.private);
