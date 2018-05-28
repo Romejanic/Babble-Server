@@ -141,7 +141,7 @@ const server = {
                                 payload: messages
                             });
                         }
-                        var myConvos = this.mysql.query("SELECT conversation FROM conversation_members WHERE userId = ?", [client.user_id]);
+                        var myConvos = this.mysql.query("SELECT conversation AS id FROM conversation_members WHERE userId = ?", [client.user_id]);
                         if(myConvos.length && myConvos.length > 0) {
                             client.sendPacket({
                                 id: "sync_convos",
