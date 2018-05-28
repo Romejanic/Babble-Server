@@ -14,5 +14,9 @@
     "keypair": "^1.0.1",
     "readline-sync": "^1.4.9",
     "sync-mysql": "^3.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/romejanic/babble-server"    
   }
 }
