@@ -1,3 +1,10 @@
+/**
+ *     DEPRECATED
+ * 
+ *  This script has been deprecated. RSA encryption in the application has been
+ *  replaced with AES encryption, implemented in the encrypt.js file.
+ */
+
 const crypto = require("crypto");
 const keypair = require("keypair");
 
