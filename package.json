@@ -1,6 +1,7 @@
 {
   "name": "babble-server",
-  "version": "0.0.1",
+  "displayName": "Babble Server",
+  "version": "0.0.3",
   "author": {
     "name": "Jack Davenport"
   },
