@@ -135,4 +135,6 @@ const encrypt = function() {
         }
     };
 };
+
+// export the function to a module
 module.exports = encrypt;
