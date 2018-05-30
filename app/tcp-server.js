@@ -30,19 +30,19 @@ const server = {
             socket.setTimeout(60000);
             socket.on("data", (data) => {
                 try {
-                    var packetJson;
                     if(client.encryption.aesKey) {
-                        packetJson = client.encryption.decrypt(data.toString());
-                    } else {
-                        packetJson = data.toString();
-                    }
-                    var packet = JSON.parse(packetJson);
-                    if(packet) {
-                        if(!client.encryption.aesKey) {
-                            client.encryption.handleKeyExchangePacket(data, socket);
-                        } else {
+                        var packetJson = client.encryption.decrypt(data.toString());
+                        var packet;
+                        try {
+                            packet = JSON.parse(packetJson);
+                        } catch(e) {
+                            throw "bad packet json: " + packetJson;
+                        }
+                        if(packet) {
                             this.handlePacket(packet, client);
                         }
+                    } else {
+                        client.encryption.handleKeyExchangePacket(data, socket);
                     }
                 } catch(e) {
                     var error = {
